@@ -26,8 +26,7 @@
 #include "SDK/InputSystem.h"
 #include "Hacks/Visuals.h"
 #include "Hacks/Glow.h"
-#include "Hacks/AntiAim.h"
-#include "Hacks/Backtrack.h"
+#include "ProfileChanger/Protobuffs.h"
 
 constexpr auto windowFlags = ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize
 | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse;
@@ -72,14 +71,15 @@ void GUI::render() noexcept
     if (!config->style.menuStyle) {
         renderMenuBar();
         renderAimbotWindow();
-        AntiAim::drawGUI(false);
+        renderAntiAimWindow();
         renderTriggerbotWindow();
-        Backtrack::drawGUI(false);
+        renderBacktrackWindow();
         Glow::drawGUI(false);
         renderChamsWindow();
         renderStreamProofESPWindow();
         renderVisualsWindow();
         renderSkinChangerWindow();
+        renderProfileChangerWindow();
         renderSoundWindow();
         renderStyleWindow();
         renderMiscWindow();
@@ -148,14 +148,15 @@ void GUI::renderMenuBar() noexcept
 {
     if (ImGui::BeginMainMenuBar()) {
         menuBarItem("Aimbot", window.aimbot);
-        AntiAim::menuBarItem();
+        menuBarItem("Anti aim", window.antiAim);
         menuBarItem("Triggerbot", window.triggerbot);
-        Backtrack::menuBarItem();
+        menuBarItem("Backtrack", window.backtrack);
         Glow::menuBarItem();
         menuBarItem("Chams", window.chams);
         menuBarItem("ESP", window.streamProofESP);
         menuBarItem("Visuals", window.visuals);
         menuBarItem("Skin changer", window.skinChanger);
+        menuBarItem("Profile changer", window.profileChanger);
         menuBarItem("Sound", window.sound);
         menuBarItem("Style", window.style);
         menuBarItem("Misc", window.misc);
@@ -301,6 +302,23 @@ void GUI::renderAimbotWindow(bool contentOnly) noexcept
         ImGui::End();
 }
 
+void GUI::renderAntiAimWindow(bool contentOnly) noexcept
+{
+    if (!contentOnly) {
+        if (!window.antiAim)
+            return;
+        ImGui::SetNextWindowSize({ 0.0f, 0.0f });
+        ImGui::Begin("Anti aim", &window.antiAim, windowFlags);
+    }
+    ImGui::Checkbox("Enabled", &config->antiAim.enabled);
+    ImGui::Checkbox("##pitch", &config->antiAim.pitch);
+    ImGui::SameLine();
+    ImGui::SliderFloat("Pitch", &config->antiAim.pitchAngle, -89.0f, 89.0f, "%.2f");
+    ImGui::Checkbox("Yaw", &config->antiAim.yaw);
+    if (!contentOnly)
+        ImGui::End();
+}
+
 void GUI::renderTriggerbotWindow(bool contentOnly) noexcept
 {
     if (!contentOnly) {
@@ -422,6 +440,24 @@ void GUI::renderTriggerbotWindow(bool contentOnly) noexcept
         ImGui::End();
 }
 
+void GUI::renderBacktrackWindow(bool contentOnly) noexcept
+{
+    if (!contentOnly) {
+        if (!window.backtrack)
+            return;
+        ImGui::SetNextWindowSize({ 0.0f, 0.0f });
+        ImGui::Begin("Backtrack", &window.backtrack, windowFlags);
+    }
+    ImGui::Checkbox("Enabled", &config->backtrack.enabled);
+    ImGui::Checkbox("Ignore smoke", &config->backtrack.ignoreSmoke);
+    ImGui::Checkbox("Recoil based fov", &config->backtrack.recoilBasedFov);
+    ImGui::PushItemWidth(220.0f);
+    ImGui::SliderInt("Time limit", &config->backtrack.timeLimit, 1, 200, "%d ms");
+    ImGui::PopItemWidth();
+    if (!contentOnly)
+        ImGui::End();
+}
+
 void GUI::renderChamsWindow(bool contentOnly) noexcept
 {
     if (!contentOnly) {
@@ -430,11 +466,6 @@ void GUI::renderChamsWindow(bool contentOnly) noexcept
         ImGui::SetNextWindowSize({ 0.0f, 0.0f });
         ImGui::Begin("Chams", &window.chams, windowFlags);
     }
-
-    hotkey2("Toggle Key", config->chamsToggleKey, 80.0f);
-    hotkey2("Hold Key", config->chamsHoldKey, 80.0f);
-    ImGui::Separator();
-
     static int currentCategory{ 0 };
     ImGui::PushItemWidth(110.0f);
     ImGui::PushID(0);
@@ -879,7 +910,7 @@ void GUI::renderVisualsWindow(bool contentOnly) noexcept
     }
     ImGui::Columns(2, nullptr, false);
     ImGui::SetColumnOffset(1, 280.0f);
-    constexpr auto playerModels = "Default\0Special Agent Ava | FBI\0Operator | FBI SWAT\0Markus Delrow | FBI HRT\0Michael Syfers | FBI Sniper\0B Squadron Officer | SAS\0Seal Team 6 Soldier | NSWC SEAL\0Buckshot | NSWC SEAL\0Lt. Commander Ricksaw | NSWC SEAL\0Third Commando Company | KSK\0'Two Times' McCoy | USAF TACP\0Dragomir | Sabre\0Rezan The Ready | Sabre\0'The Doctor' Romanov | Sabre\0Maximus | Sabre\0Blackwolf | Sabre\0The Elite Mr. Muhlik | Elite Crew\0Ground Rebel | Elite Crew\0Osiris | Elite Crew\0Prof. Shahmat | Elite Crew\0Enforcer | Phoenix\0Slingshot | Phoenix\0Soldier | Phoenix\0Pirate\0Pirate Variant A\0Pirate Variant B\0Pirate Variant C\0Pirate Variant D\0Anarchist\0Anarchist Variant A\0Anarchist Variant B\0Anarchist Variant C\0Anarchist Variant D\0Balkan Variant A\0Balkan Variant B\0Balkan Variant C\0Balkan Variant D\0Balkan Variant E\0Jumpsuit Variant A\0Jumpsuit Variant B\0Jumpsuit Variant C\0Street Soldier | Phoenix\0'Blueberries' Buckshot | NSWC SEAL\0'Two Times' McCoy | TACP Cavalry\0Rezan the Redshirt | Sabre\0Dragomir | Sabre Footsoldier\0Cmdr. Mae 'Dead Cold' Jamison | SWAT\0001st Lieutenant Farlow | SWAT\0John 'Van Healen' Kask | SWAT\0Bio-Haz Specialist | SWAT\0Sergeant Bombson | SWAT\0Chem-Haz Specialist | SWAT\0Sir Bloody Miami Darryl | The Professionals\0Sir Bloody Silent Darryl | The Professionals\0Sir Bloody Skullhead Darryl | The Professionals\0Sir Bloody Darryl Royale | The Professionals\0Sir Bloody Loudmouth Darryl | The Professionals\0Safecracker Voltzmann | The Professionals\0Little Kev | The Professionals\0Number K | The Professionals\0Getaway Sally | The Professionals\0";
+    constexpr auto playerModels = "Default\0Special Agent Ava | FBI\0Operator | FBI SWAT\0Markus Delrow | FBI HRT\0Michael Syfers | FBI Sniper\0B Squadron Officer | SAS\0Seal Team 6 Soldier | NSWC SEAL\0Buckshot | NSWC SEAL\0Lt. Commander Ricksaw | NSWC SEAL\0Third Commando Company | KSK\0'Two Times' McCoy | USAF TACP\0Dragomir | Sabre\0Rezan The Ready | Sabre\0'The Doctor' Romanov | Sabre\0Maximus | Sabre\0Blackwolf | Sabre\0The Elite Mr. Muhlik | Elite Crew\0Ground Rebel | Elite Crew\0Osiris | Elite Crew\0Prof. Shahmat | Elite Crew\0Enforcer | Phoenix\0Slingshot | Phoenix\0Soldier | Phoenix\0Pirate\0Pirate Variant A\0Pirate Variant B\0Pirate Variant C\0Pirate Variant D\0Anarchist\0Anarchist Variant A\0Anarchist Variant B\0Anarchist Variant C\0Anarchist Variant D\0Balkan Variant A\0Balkan Variant B\0Balkan Variant C\0Balkan Variant D\0Balkan Variant E\0Jumpsuit Variant A\0Jumpsuit Variant B\0Jumpsuit Variant C\0Street Soldier | Phoenix\0'Blueberries' Buckshot | NSWC SEAL\0'Two Times' McCoy | TACP Cavalry\0Rezan the Redshirt | Sabre\0Dragomir | Sabre Footsoldier\0Cmdr. Mae 'Dead Cold' Jamison | SWAT\0 1st Lieutenant Farlow | SWAT\0John 'Van Healen' Kask | SWAT\0Bio-Haz Specialist | SWAT\0Sergeant Bombson | SWAT\0Chem-Haz Specialist | SWAT\0Sir Bloody Miami Darryl | The Professionals\0Sir Bloody Silent Darryl | The Professionals\0Sir Bloody Skullhead Darryl | The Professionals\0Sir Bloody Darryl Royale | The Professionals\0Sir Bloody Loudmouth Darryl | The Professionals\0Safecracker Voltzmann | The Professionals\0Little Kev | The Professionals\0Number K | The Professionals\0Getaway Sally | The Professionals\0";
     ImGui::Combo("T Player Model", &config->visuals.playerModelT, playerModels);
     ImGui::Combo("CT Player Model", &config->visuals.playerModelCT, playerModels);
     ImGui::Checkbox("Disable post-processing", &config->visuals.disablePostProcessing);
@@ -938,7 +969,6 @@ void GUI::renderVisualsWindow(bool contentOnly) noexcept
     ImGui::Combo("Hit marker", &config->visuals.hitMarker, "None\0Default (Cross)\0");
     ImGui::SliderFloat("Hit marker time", &config->visuals.hitMarkerTime, 0.1f, 1.5f, "%.2fs");
     ImGuiCustom::colorPicker("Bullet Tracers", config->visuals.bulletTracers.color.color.data(), &config->visuals.bulletTracers.color.color[3], nullptr, nullptr, &config->visuals.bulletTracers.enabled);
-    ImGuiCustom::colorPicker("Molotov Hull", config->visuals.molotovHull);
 
     ImGui::Checkbox("Color correction", &config->visuals.colorCorrection.enabled);
     ImGui::SameLine();
@@ -1046,14 +1076,6 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
                             selected_entry.paint_kit_vector_index = i;
                             ImGui::CloseCurrentPopup();
                         }
-
-                        if (ImGui::IsItemHovered()) {
-                            if (const auto icon = SkinChanger::getItemIconTexture(kits[i].iconPath)) {
-                                ImGui::BeginTooltip();
-                                ImGui::Image(icon, { 200.0f, 150.0f });
-                                ImGui::EndTooltip();
-                            }
-                        }
                         if (selected && ImGui::IsWindowAppearing())
                             ImGui::SetScrollHereY();
                         ImGui::PopID();
@@ -1139,13 +1161,6 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
                             selected_sticker.kit_vector_index = i;
                             ImGui::CloseCurrentPopup();
                         }
-                        if (ImGui::IsItemHovered()) {
-                            if (const auto icon = SkinChanger::getItemIconTexture(kits[i].iconPath)) {
-                                ImGui::BeginTooltip();
-                                ImGui::Image(icon, { 200.0f, 150.0f });
-                                ImGui::EndTooltip();
-                            }
-                        }
                         if (selected && ImGui::IsWindowAppearing())
                             ImGui::SetScrollHereY();
                         ImGui::PopID();
@@ -1173,6 +1188,92 @@ void GUI::renderSkinChangerWindow(bool contentOnly) noexcept
         SkinChanger::scheduleHudUpdate();
 
     ImGui::TextUnformatted("nSkinz by namazso");
+
+    if (!contentOnly)
+        ImGui::End();
+}
+
+void GUI::renderProfileChangerWindow(bool contentOnly) noexcept
+{
+    if (!contentOnly) {
+        if (!window.profileChanger)
+            return;
+        ImGui::SetNextWindowSize({ 290.0f, 0.0f });
+        ImGui::Begin("Profile Changer", &window.profileChanger, windowFlags);
+    }
+
+    static const char* bans_gui[] =
+    {
+        "Off",
+        "You were kicked from the last match (competitive cooldown)",
+        "You killed too many teammates (competitive cooldown)",
+        "You killed a teammate at round start (competitive cooldown)",
+        "You failed to reconnect to the last match (competitive cooldown)",
+        "You abandoned the last match (competitive cooldown)",
+        "You did too much damage to your teammates (competitive cooldown)",
+        "You did too much damage to your teammates at round start (competitive cooldown)",
+        "This account is permanently untrusted (global cooldown)",
+        "You were kicked from too many recent matches (competitive cooldown)",
+        "Convicted by overwatch - majorly disruptive (global cooldown)",
+        "Convicted by overwatch - minorly disruptive (global cooldown)",
+        "Resolving matchmaking state for your account (temporary cooldown)",
+        "Resolving matchmaking state after the last match (temporary cooldown)",
+        "This account is permanently untrusted (global cooldown)",
+        "(global cooldown)",
+        "You failed to connect by match start. (competitive cooldown)",
+        "You have kicked too many teammates in recent matches (competitive cooldown)",
+        "Congratulations on your recent competitive wins! before you play competitive matches further please wait for matchmaking servers to calibrate your skill group placement based on your lastest performance. (temporary cooldown)",
+        "A server using your game server login token has been banned. your account is now permanently banned from operating game servers, and you have a cooldown from connecting to game servers. (global cooldown)"
+    };
+    const char* ranks_gui[] = {
+        "Off",
+        "Silver 1",
+        "Silver 2",
+        "Silver 3",
+        "Silver 4",
+        "Silver elite",
+        "Silver elite master",
+        "Gold nova 1",
+        "Gold nova 2",
+        "Gold nova 3",
+        "Gold nova master",
+        "Master guardian 1",
+        "Master guardian 2",
+        "Master guardian elite",
+        "Distinguished master guardian",
+        "Legendary eagle",
+        "Legendary eagle master",
+        "Supreme master first class",
+        "The global elite"
+    };
+
+    ImGui::Checkbox("Enabled##profile", &config->profileChanger.enabled);
+    ImGui::Text("Rank");
+    ImGui::Combo("##Rank", &config->profileChanger.rank, ranks_gui, ARRAYSIZE(ranks_gui));
+    ImGui::Text("Level");
+    ImGui::SliderInt("##Level", &config->profileChanger.level, 0, 40);
+    ImGui::Text("XP");
+    ImGui::InputInt("##Xp##level", &config->profileChanger.exp);
+    ImGui::Text("Wins");
+    ImGui::InputInt("##Wins", &config->profileChanger.wins);
+    ImGui::Text("Friend");
+    ImGui::InputInt("##Friend", &config->profileChanger.friendly);
+    ImGui::Text("Teach");
+    ImGui::InputInt("##Teach", &config->profileChanger.teach);
+    ImGui::Text("Leader");
+    ImGui::InputInt("##Leader", &config->profileChanger.leader);
+    ImGui::Text("Fake ban type");
+    ImGui::Combo("##fake-ban", &config->profileChanger.ban_type, bans_gui, IM_ARRAYSIZE(bans_gui));
+    ImGui::Text("Fake ban time");
+    ImGui::SliderInt("##fake-ban-time", &config->profileChanger.ban_time, 0, 1000, "Seconds: %d");
+    ImGui::SetCursorPosX(ImGui::GetCursorPosX() + (250 / 2) - (190 / 2) - 20.f);
+    if (ImGui::Button("Apply", ImVec2(190, 30)))
+    {
+        write.SendClientHello();
+        write.SendMatchmakingClient2GCHello();
+    }
+
+
 
     if (!contentOnly)
         ImGui::End();
@@ -1265,21 +1366,8 @@ void GUI::renderMiscWindow(bool contentOnly) noexcept
     ImGui::Checkbox("Reveal ranks", &config->misc.revealRanks);
     ImGui::Checkbox("Reveal money", &config->misc.revealMoney);
     ImGui::Checkbox("Reveal suspect", &config->misc.revealSuspect);
-
-    ImGui::Checkbox("Spectator list", &config->misc.spectatorList.enabled);
-    ImGui::SameLine();
-
-    ImGui::PushID("Spectator list");
-    if (ImGui::Button("..."))
-        ImGui::OpenPopup("");
-
-    if (ImGui::BeginPopup("")) {
-        ImGui::Checkbox("No Title Bar", &config->misc.spectatorList.noTitleBar);
-        ImGui::EndPopup();
-    }
-    ImGui::PopID();
-
-    ImGui::Checkbox("Watermark", &config->misc.watermark.enabled);
+    ImGuiCustom::colorPicker("Spectator list", config->misc.spectatorList);
+    ImGuiCustom::colorPicker("Watermark", config->misc.watermark);
     ImGuiCustom::colorPicker("Offscreen Enemies", config->misc.offscreenEnemies.color, &config->misc.offscreenEnemies.enabled);
     ImGui::Checkbox("Fix animation LOD", &config->misc.fixAnimationLOD);
     ImGui::Checkbox("Fix bone matrix", &config->misc.fixBoneMatrix);
@@ -1493,8 +1581,8 @@ void GUI::renderConfigWindow(bool contentOnly) noexcept
                     case 0: config->reset(); updateColors(); Misc::updateClanTag(true); SkinChanger::scheduleHudUpdate(); break;
                     case 1: config->aimbot = { }; break;
                     case 2: config->triggerbot = { }; break;
-                    case 3: Backtrack::resetConfig(); break;
-                    case 4: AntiAim::resetConfig(); break;
+                    case 3: config->backtrack = { }; break;
+                    case 4: config->antiAim = { }; break;
                     case 5: Glow::resetConfig(); break;
                     case 6: config->chams = { }; break;
                     case 7: config->streamProofESP = { }; break;
@@ -1540,12 +1628,18 @@ void GUI::renderGuiStyle2() noexcept
             renderAimbotWindow(true);
             ImGui::EndTabItem();
         }
-        AntiAim::tabItem();
+        if (ImGui::BeginTabItem("Anti aim")) {
+            renderAntiAimWindow(true);
+            ImGui::EndTabItem();
+        }
         if (ImGui::BeginTabItem("Triggerbot")) {
             renderTriggerbotWindow(true);
             ImGui::EndTabItem();
         }
-        Backtrack::tabItem();
+        if (ImGui::BeginTabItem("Backtrack")) {
+            renderBacktrackWindow(true);
+            ImGui::EndTabItem();
+        }
         Glow::tabItem();
         if (ImGui::BeginTabItem("Chams")) {
             renderChamsWindow(true);
@@ -1561,6 +1655,10 @@ void GUI::renderGuiStyle2() noexcept
         }
         if (ImGui::BeginTabItem("Skin changer")) {
             renderSkinChangerWindow(true);
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Profile changer")) {
+            renderProfileChangerWindow(true);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Sound")) {
