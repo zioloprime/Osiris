@@ -1,0 +1,3 @@
+C:/Users/Lenovo/Documents/GitHub/Osiris/out/build/x64-Debug (domyślnie)/CMakeFiles/edit_cache.dir
+C:/Users/Lenovo/Documents/GitHub/Osiris/out/build/x64-Debug (domyślnie)/CMakeFiles/Osiris.dir
+C:/Users/Lenovo/Documents/GitHub/Osiris/out/build/x64-Debug (domyślnie)/CMakeFiles/rebuild_cache.dir
